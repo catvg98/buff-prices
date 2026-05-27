@@ -1,5 +1,3 @@
-const https = require('https');
-
 module.exports = async (req, res) => {
     const apiKey = process.env.PRICEMPIRE_API_KEY;
     
@@ -12,21 +10,12 @@ module.exports = async (req, res) => {
         
         const data = await response.json();
         
-        const prices = {};
-        for (const item of data) {
-            const name = item.market_hash_name || item.name;
-            if (!name) continue;
-            const price = item.buff163?.price;
-            if (price && price > 0) {
-                prices[name] = { price: parseFloat(price) };
-            }
-        }
-        
-        prices.updated_at = new Date().toISOString();
-        
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Cache-Control', 'no-store');
-        res.status(200).json(prices);
+        // Debug: mostra os primeiros 2 items para vermos a estrutura
+        res.status(200).json({
+            total: Array.isArray(data) ? data.length : "not array",
+            type: typeof data,
+            sample: Array.isArray(data) ? data.slice(0, 2) : data
+        });
         
     } catch (err) {
         res.status(500).json({ error: err.message });
