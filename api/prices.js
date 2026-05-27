@@ -10,25 +10,13 @@ module.exports = async (req, res) => {
         
         const data = await response.json();
         
-        const prices = {};
-        for (const item of data) {
-            const name = item.market_hash_name;
-            if (!name) continue;
-            
-            // prices é um array, procura o buff163
-            const buffEntry = item.prices?.find(p => p.source === "buff163");
-            const price = buffEntry?.price;
-            
-            if (price && price > 0) {
-                prices[name] = { price: parseFloat(price) };
-            }
-        }
+        // Procura o primeiro item que tenha prices não vazio
+        const itemWithPrices = data.find(item => item.prices && item.prices.length > 0);
         
-        prices.updated_at = new Date().toISOString();
-        
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Cache-Control', 'no-store');
-        res.status(200).json(prices);
+        res.status(200).json({
+            sample_empty: data[0],
+            sample_with_prices: itemWithPrices || "none found"
+        });
         
     } catch (err) {
         res.status(500).json({ error: err.message });
