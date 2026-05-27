@@ -1,0 +1,39 @@
+name: Update Prices
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Fetch prices from Pricempire
+        env:
+          PRICEMPIRE_API_KEY: ${{ secrets.PRICEMPIRE_API_KEY }}
+        run: |
+          curl -s "https://api.pricempire.com/v4/trader/items/prices?app_id=730&sources=buff163&currency=USD&avg=false&median=false&inflation_threshold=-1" \
+            -H "Authorization: Bearer $PRICEMPIRE_API_KEY" | \
+          node -e "
+            const data = JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8'));
+            const prices = {};
+            for (const item of data) {
+              const name = item.market_hash_name;
+              if (!name) continue;
+              const buffEntry = item.prices?.find(p => p.provider_key === 'buff163');
+              const price = buffEntry?.price;
+              if (price && price > 0) prices[name] = { price: parseFloat(price) / 100 };
+            }
+            prices.updated_at = new Date().toISOString();
+            require('fs').writeFileSync('prices.json', JSON.stringify(prices));
+          "
+      
+      - name: Commit and push
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add prices.json
+          git diff --staged --quiet || (git commit -m "Update prices" && git push)
