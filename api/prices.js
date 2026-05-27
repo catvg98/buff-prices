@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
             const price = buffEntry?.price;
             
             if (price && price > 0) {
-                prices[name] = { price: parseFloat(price) };
+                prices[name] = { price: parseFloat(price) / 100 };
             }
         }
         
