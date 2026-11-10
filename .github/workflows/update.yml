@@ -18,9 +18,11 @@ jobs:
           PRICEMPIRE_API_KEY: ${{ secrets.PRICEMPIRE_API_KEY }}
         run: |
           curl -s "https://api.pricempire.com/v4/trader/items/prices?app_id=730&sources=buff163&currency=USD&avg=false&median=false&inflation_threshold=-1" \
-            -H "Authorization: Bearer $PRICEMPIRE_API_KEY" | \
+            -H "Authorization: Bearer $PRICEMPIRE_API_KEY" \
+            -o raw.json
+
           node -e "
-            const data = JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8'));
+            const data = JSON.parse(require('fs').readFileSync('raw.json', 'utf8'));
             const prices = {};
             for (const item of data) {
               const name = item.market_hash_name;
